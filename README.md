@@ -32,7 +32,7 @@ The first version focuses on functional communication rather than emotion detect
   <img src="docs/images/aacorn-mascot.png" width="541" alt="AACorn mascot">
 </p>
 
-AACorn's mascot is an original acorn-inspired character. It is used for project branding rather than as a functional AAC pictogram.
+AACorn's mascot is an original acorn-inspired character designed by Ruoshui Deng. It is used for project branding rather than as a functional AAC pictogram.
 
 ---
 
