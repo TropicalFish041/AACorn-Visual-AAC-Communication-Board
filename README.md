@@ -3,6 +3,7 @@
 ## Team Information
 
 ### Team Members
+
 - Harleen Sidhu
 - Ruoshui Deng
 - Ruohan Tang
@@ -11,252 +12,372 @@
 ---
 
 ## Project Description
-A customizable visual AAC (Augmentative and Alternative Communication) app for 
-autistic children around ages 5–12 who have limited functional speech. 
-
-The main goal is to help a child communicate simple needs and requests using pictograms.
-Example: I Want → Water → “I want water.”
-
-For the first version, we are focusing on functional communication instead of 
-emotion detection, behaviour prediction, pain assessment, or other therapy-related features.
-
-### Main Features
-- make simple requests using pictograms 
-- quick access to Help, Stop, and Break 
-- search ARASAAC for pictograms 
-- add/remove pictograms from the board 
-- save the board and communication history
-
 
 ### Domain
-Augmentative and Alternative Communication (AAC) for 
-Children with Autism Spectrum Disorder (ASD)
 
-### Entities
-- Pictogram
-  - id
-  - label
-  - image location
+**Augmentative and Alternative Communication (AAC)**
 
+AACorn is a Java-based visual AAC application designed primarily for autistic children around ages 5–12 with limited functional speech.
 
-- CommunicationBoard (currently available vocabulary):
-  - list of pictograms
-  - add pictogram
-  - remove pictogram
+The goal is to help a child communicate simple everyday needs using pictograms.
 
+**Example:**  
+`I want` → `Water` → **"I want water."**
 
-- CommunicationMessage (what the child actually selected/sent):
-  - message text: String
-  - selectedPictograms: List<Pictogram>
-  - timestamp: LocalDateTime
-  - <span style="color: yellow;">***TODO: Professor feedback: The definition of CommunicationMessage is unclear,
-    and its relationship to Pictogram, CommunicationBoard and the other entities is not visible.***</span>
+The first version focuses on functional communication rather than emotion detection, pain assessment, behaviour prediction, or other therapy-related features.
 
+### Project Mascot
 
-- ChildProfile (owns the personalized board and saved message history)
-  - customized communication board
-  - communication history
+<p align="center">
+  <img src="docs/images/aacorn-mascot.png" width="541" alt="AACorn mascot">
+</p>
 
-Basic relationships:
-ChildProfile  ->  CommunicationBoard → Pictograms
-ChildProfile  ->   CommunicationMessages
-
-<span style='color: yellow;'> additional entities?</span>
+AACorn's mascot is an original acorn-inspired character. It is used for project branding rather than as a functional AAC pictogram.
 
 ---
 
 ## User Stories
 
-#### Child
-1. As a child, I want to select pictograms so that I can communicate something I want.
-2. As a child, I want quick access to Help, Stop, and Break so that I can communicate important needs easily.
+### Child
 
-#### Caregiver
-1. As a caregiver, I want to search, add, or remove pictograms so that I can customize the child's communication board.
-2. As a caregiver, I want to view previous messages so that I can see what the child has communicated.
+1. **As a child, I want to select pictograms so that I can communicate something I want.**
+
+2. **As a child, I want quick access to Help, Stop, and Break so that I can communicate important needs easily.**
+
+### Caregiver
+
+3. **As a caregiver, I want to search for, add, and remove pictograms so that I can customize the child's communication board.**
+
+4. **As a caregiver, I want to view previous messages so that I can see what the child has communicated.**
 
 ---
 
 ## Use Cases
-UC1: Communicate a Request  
-Actor: Child
-The child chooses I Want.  
-> 1. The system displays the available pictograms.  
-> 2. The child selects one pictogram.  
-> 3. The system creates and displays a message.  
-> 4. The message is saved to history.  
-> 5. If the child goes back before finishing, no message is saved.
 
-UC2: Search for a Pictogram  
-Actor: Caregiver
-> 1. The caregiver enters a search term.
-> 2. The system searches ARASAAC.
-> 3. Matching pictograms are displayed.
-> 4. The caregiver can choose a pictogram to add to the board.
-> 5. If the API is unavailable or no result is found, the system displays an error message.
+### UC1 - Communicate a Request
 
-UC3: Customize the Board  
-Actor: Caregiver
-> 1. The caregiver views the current board.
-> 2. The caregiver adds or removes a pictogram.
-> 3. The board is updated.
-> 4. The new board is saved.
+**Actor:** Child
 
-UC4: View Communication History  
-Actor: Caregiver
-> 1. The caregiver opens the communication history.
-> 2. The system loads previous messages.
-> 3. The messages are displayed in chronological order.
+**Precondition:** The communication board contains at least one available pictogram.
 
-<span style='color: dodgerblue;'>***Extra Feature:***  
-UC5: Suggestion for vocabulary  
-Actor: Caregiver/Therapist</span>
-> 1. The caregiver/therapist reviews vocabulary suggestions from prediction algorithms.
-> 2. The caregiver/therapist can update the board by clicking an add button.
+**Trigger:** The child wants to communicate a request.
 
-<span style='color: dodgerblue;'>***Professor feedback:***  
-Prediction needs careful thought. Wrong predictions could negatively affect the children using the app, so it should be an extra feature, not part of the core. If included, it should support the caregiver (who can review and decide), not act directly on the child’s screen.</span>
+**Success Outcome:** A completed message is created and can be stored in communication history.
+
+**Main Scenario:**
+
+1. The child selects pictograms from the communication board.
+2. The selected pictograms appear in the current message.
+3. The child may add, repeat, remove, or clear selections.
+4. The system constructs a readable message from the selected pictograms.
+5. The completed message is sent.
+
+**Extensions:**
+
+- The same pictogram may be selected more than once.
+- The child may remove a selected pictogram.
+- An incomplete or cleared draft is not stored as a completed message.
+
+---
+
+### UC2 - Communicate a Core Message
+
+**Actor:** Child
+
+**Trigger:** The child selects **Help**, **Stop**, or **Break**.
+
+**Success Outcome:** The selected core message is immediately available for communication.
+
+**Main Scenario:**
+
+1. The child selects a core message.
+2. The system creates the corresponding communication message.
+3. The completed message can be stored in communication history.
+
+---
+
+### UC3 - Customize the Communication Board
+
+**Actor:** Caregiver
+
+**Precondition:** The caregiver has entered caregiver mode.
+
+**Trigger:** The caregiver chooses **Customize Board**.
+
+**Success Outcome:** The child's available pictograms are updated.
+
+**Main Scenario:**
+
+1. The caregiver views the current communication board.
+2. The caregiver may remove an existing pictogram.
+3. The caregiver may select **Add Pictogram**.
+4. The caregiver searches ARASAAC by keyword.
+5. Matching pictograms are displayed.
+6. The caregiver selects a pictogram to add to the board.
+7. The updated board is saved.
+
+**Extension:**
+
+- If the API is unavailable or no matching pictogram is found, the system displays an appropriate message.
+
+---
+
+### UC4 - View Communication History
+
+**Actor:** Caregiver
+
+**Precondition:** At least one completed communication message has been saved.
+
+**Trigger:** The caregiver chooses **History**.
+
+**Success Outcome:** Previous communication messages are displayed in chronological order.
+
+**Main Scenario:**
+
+1. The caregiver opens communication history.
+2. The system loads saved messages.
+3. The messages are displayed with their timestamps.
 
 ---
 
 ## Minimal Viable Product (MVP)
 
-| Team Member | MVP Use Case |
-|-------------|--------------|
-| Name | Request communication |
-| Name | Help/ Stop/ Delete |
-| Name | ARASAAC search |
- | Name | Board customization|
-  | Name | History / Persistence |
-
-<span style='color: dodgerblue;'>***Extra Features:***</span>
+Each team member will take the lead on one MVP use case.
 
 | Team Member | MVP Use Case |
-|-------------|--------------|
-| Name | Usage Statistics |
-| Name | vocabulary suggestions |
+|---|---|
+| TBD | UC1 - Communicate a Request |
+| TBD | UC2 - Communicate a Core Message |
+| TBD | UC3 - Customize the Communication Board |
+| TBD | UC4 - View Communication History |
+
+> MVP use-case ownership will be finalized before Phase 2 implementation.
 
 ---
 
 ## Entities
 
-### Entity 1
+### `Pictogram`
 
-### Entity 2
+Represents one selectable AAC symbol.
 
-(Add additional entities as needed.)
+**Instance Variables**
+
+```java
+int id
+String label
+String imageLocation
+```
+
+**Relevant Methods**
+
+```java
+getId()
+getLabel()
+getImageLocation()
+```
+
+---
+
+### `CommunicationDraft`
+
+Represents the temporary message currently being constructed by the child.
+
+**Instance Variables**
+
+```java
+String sentenceStarter
+List<Pictogram> selectedPictograms
+```
+
+**Relevant Methods**
+
+```java
+addPictogram(...)
+removeLastPictogram()
+removePictogramAt(...)
+repeatPictogramAt(...)
+clear()
+previewText()
+buildMessage(...)
+```
+
+---
+
+### `CommunicationMessage`
+
+Represents a completed message sent by the child.
+
+**Instance Variables**
+
+```java
+List<Pictogram> selectedPictograms
+String text
+LocalDateTime timestamp
+```
+
+**Relevant Methods**
+
+```java
+getSelectedPictograms()
+getText()
+getTimestamp()
+```
+
+A completed `CommunicationMessage` is immutable and is kept separate from the child's current `CommunicationDraft`.
+
+---
+
+### Planned: `CommunicationBoard`
+
+Represents the vocabulary currently available to the child.
+
+**Planned Responsibilities**
+
+- store available pictograms
+- add pictograms
+- remove pictograms
+
+---
+
+### Planned: `ChildProfile`
+
+Represents the saved state for the current child.
+
+**Planned Data**
+
+- customized `CommunicationBoard`
+- communication history
 
 ---
 
 ## API Usage
 
-**API Name:**
-ARASAAC API
+**API Name:** ARASAAC API
 
-**Documentation:** [Link]
-<span style='color: yellow;'>TODO</span>
+**Documentation:** [ARASAAC API documentation](ADD_OFFICIAL_API_LINK_HERE)
 
 **How it is used in the program:**
-to search for pictograms
+
+- search for pictograms by keyword
+- retrieve pictogram metadata
+- retrieve pictogram images
+- allow caregivers to add selected pictograms to the communication board
+
+**Current Status:** API research and Java integration are in progress. API functionality has not yet been merged into `main`.
 
 ---
 
 ## Persistence
-We plan to use local JSON files to save: the customized board, selected pictograms,
-communication history. For development and testing, we will use sample data instead of real clinical data.
+
+AACorn plans to use local JSON storage for:
+
+- the customized communication board
+- pictogram information
+- communication history
+
+Development and testing use sample data rather than real clinical data.
 
 ---
 
 ## Design Diagrams
 
-### UI
-![][image1]
+### UI Flow
 
-[image1]: docs/images/ui.png
-### UML Class Diagram 
-<span style='color: yellow;'>***TODO:***</span>
+AACorn has a child-facing communication interface and a separate caregiver mode.
+
+<p align="center">
+  <img src="docs/images/UI-draft.png" width="2791" alt="AACorn UI flow">
+</p>
+
+Caregiver mode is accessed from the child interface through a settings button and a 4-digit PIN screen.
+
+The caregiver can then choose between:
+
+- **History**
+- **Customize Board**
+
+### UML Class Diagram
+
+**Status:** In progress.
+
+The initial UML diagram will include the core entities and their relationships as the remaining domain model is finalized.
 
 ### Sequence Diagrams
 
-<span style='color: yellow;'>***TODO:***</span>
-
+**Status:** To be added during use-case implementation.
 
 ---
+
+## Current Development Status
+
+AACorn is currently in **Phase 1: Framework**.
+
+| Area | Owner | Status |
+|---|---|---|
+| UI design and navigation | Team | Initial design completed |
+| Communication logic | Ruoshui | Implemented and tested |
+| Data model / architecture | Ruohan | In progress |
+| ARASAAC API research | Paul | In progress |
+| Swing prototype | Harleen | In progress |
+
+### Implemented
+
+- `Pictogram`
+- `CommunicationDraft`
+- `CommunicationMessage`
+- add/remove/repeat pictogram logic
+- message preview and construction
+- communication edge-case tests
+- JUnit configuration
+
+### In Progress
+
+- ARASAAC integration
+- Swing GUI
+- UML and Clean Architecture design
+- `CommunicationBoard`
+- `ChildProfile`
+- JSON persistence
+- communication history
+
+---
+
 ## How to Run
 
-<span style='color: yellow;'>***TODO:***</span>
-[Instructions for running the program.]
+The complete Swing application is not yet integrated.
 
----
+The currently implemented domain logic and tests can be run with:
 
-## Planning
-### Phase 1: Framework (Reading Week)
+```bash
+mvn clean test
+```
 
-#### 1. UI Design and Navigation
-- [ ] Sketch the child and caregiver interfaces.
-- [ ] Design the message bar and core buttons (Help, Stop, Delete).
-- [ ] Plan navigation between screens.
-- [ ] Implement the basic Java Swing GUI using `JFrame` and `JPanel`.
-
-#### 2. ARASAAC API Research
-- [ ] Identify the ARASAAC API endpoints for searching pictograms.
-- [ ] Test HTTP requests in Java.
-- [ ] Retrieve pictogram images and relevant data.
-- [ ] Parse API responses.
-
-#### 3. Data Model and Architecture
-- [ ] Draft the initial UML class diagram.
-- [ ] Define the core entities and their relationships.
-- [ ] Design the JSON persistence approach for the communication board and history.
-- [ ] Establish the Clean Architecture package structure.
-
-#### 4. Communication Logic
-- [ ] Implement pictogram selection and message construction.
-- [ ] Handle repeated pictograms and removal of selected pictograms.
-- [ ] Implement message deletion and reset functionality.
-- [ ] Handle navigation between screens without losing or incorrectly saving selections.
-- [ ] Convert selected pictograms into a readable sentence.
-- [ ] Investigate text-to-speech functionality.
-
-#### 5. Swing Prototype
-- [ ] Display pictograms and selected messages.
-- [ ] Connect button events to the communication logic.
-- [ ] Implement basic child and caregiver views.
-- [ ] Integrate the GUI with the backend.
-
-#### Task Assignments
-
-| Team Member | Task |
-|---|---|
-| Ruoshui | Swing Prototype |
-| Belinda | Data Model and Architecture |
-| Paul | ARASAAC API Research |
-| Harleen | Communication Logic |
-
-### Phase 2: User Story Backend (Reading Week) 
-
-| Team Member | Task |
-|---|---|
-| Ruoshui | To be determined |
-| Belinda | To be determined |
-| Paul | To be determined |
-| Harleen | To be determined |
-
-- [ ] UC1: Communicate a Request
-- [ ] UC2: Search for a Pictogram
-- [ ] UC3: Customize the Board
-- [ ] UC4: View Communication History
-- [ ] Implement persistence for the communication board and history.
-- [ ] Test edge cases and integrate all components.
-
-### Phase 3: Extra Features + Presentation (Post Reading Week)
-- [ ] Communication usage statistics (e.g., most frequently selected pictograms).
-- [ ] Caregiver-facing vocabulary suggestions based on communication history.
-- [ ] Child profile management.
-- [ ] Fix bugs, finalize application, prepare for presentation.
+A runnable GUI entry point will be added as the Swing prototype and use cases are integrated.
 
 ---
 
 ## Notes
 
-[Any additional project information.]
+### Current Technology
+
+- **Language:** Java 11
+- **GUI:** Java Swing
+- **Build Tool:** Maven
+- **Testing:** JUnit 5
+- **External API:** ARASAAC
+- **Persistence:** planned local JSON storage
+- **Architecture:** Clean Architecture / SOLID principles
+
+### Possible Future Extensions
+
+The following are **not part of the current MVP**:
+
+- text-to-speech
+- communication usage statistics
+- caregiver-facing vocabulary suggestions
+- multiple child profiles
+- richer child profile management
+- previewing board changes before saving
+
+Development is completed through feature branches and Pull Requests, with completed work reviewed before being merged into `main`.
