@@ -228,26 +228,72 @@ A completed `CommunicationMessage` is immutable and is kept separate from the ch
 
 ---
 
-### Planned: `CommunicationBoard`
+### `CommunicationBoard`
 
 Represents the vocabulary currently available to the child.
+A caregiver can add or remove pictograms.
 
-**Planned Responsibilities**
+**Instance Variables**
 
-- store available pictograms
-- add pictograms
-- remove pictograms
+```java
+int capacity                  // default 20
+List<Pictogram> pictograms
+```
+
+**Relevant Methods**
+
+```java
+addPictogram(...)
+removePictogram(...)
+contains(...)
+isFull()
+getPictograms()
+```
+
+**Business Rules**
+
+- The same pictogram cannot appear twice on the board (the child can still select it more than once in a draft).
+- The board holds at most 20 pictograms by default.
+- Removing a pictogram that is not on the board is an error.
+- Pictograms keep the order chosen by the caregiver.
 
 ---
 
-### Planned: `ChildProfile`
+### `ChildProfile`
 
-Represents the saved state for the current child.
+Represents all saved data for the child using the app.
+AACorn is designed for **one child per installation**.
 
-**Planned Data**
+**Instance Variables**
 
-- customized `CommunicationBoard`
-- communication history
+```java
+CommunicationBoard board
+List<CommunicationMessage> history
+```
+
+**Relevant Methods**
+
+```java
+getBoard()
+addMessage(...)
+getHistory()
+hasHistory()
+```
+
+**Business Rules**
+
+- History is kept in the order messages were sent (oldest first).
+- History can only be added to through `addMessage`; it cannot be edited or reordered from outside.
+
+### Entity Relationships
+
+```
+ChildProfile
+ ├── CommunicationBoard ── contains many Pictograms
+ └── history: many CommunicationMessages ── each contains the Pictograms the child selected
+
+CommunicationDraft ── builds ──> CommunicationMessage
+```
 
 ---
 
@@ -268,13 +314,60 @@ Represents the saved state for the current child.
 
 ---
 
+## Project Structure
+
+The code follows Clean Architecture. Inner layers never depend on outer layers.
+
+| Package | Contents |
+|---|---|
+| `entity` | Domain classes and business rules (`Pictogram`, `CommunicationBoard`, `ChildProfile`, …) |
+| `use_case/<use_case>` | Interactors, input/output data, data access interfaces |
+| `interface_adapter/<use_case>` | Controllers, presenters, view models |
+| `data_access` | JSON storage and ARASAAC API calls |
+| `view` | Java Swing screens |
+| `app` | `Main`, where all layers are connected |
+
+Use-case subpackages: `communicate_request` (UC1), `core_message` (UC2), `customize_board` (UC3), `view_history` (UC4).
+
+---
 ## Persistence
 
-AACorn plans to use local JSON storage for:
+AACorn stores all of the child's data in one local JSON file: `data/profile.json`.
 
-- the customized communication board
-- pictogram information
-- communication history
+```json
+{
+  "board": [
+    { "id": 2248, "label": "water", "imageLocation": "https://.../2248.png" },
+    { "id": 2462, "label": "apple", "imageLocation": "https://.../2462.png" }
+  ],
+  "history": [
+    {
+      "text": "I want water.",
+      "timestamp": "2026-10-26T10:00:00",
+      "pictograms": [
+        { "id": 2248, "label": "water", "imageLocation": "https://.../2248.png" }
+      ]
+    }
+  ]
+}
+```
+
+**Design decisions**
+
+- `board` keeps the caregiver's order; `history` is oldest first.
+- Each history message stores a **full copy** of its pictograms, not just their IDs. History is a record of what was said, so it must still display correctly after a pictogram is removed from the board or when the ARASAAC API is offline.
+- Timestamps use ISO-8601 format so they can be read back with `LocalDateTime.parse()`.
+
+**Data access interfaces**
+
+Following Clean Architecture, each use case defines the data access it needs in its own `use_case` package. One class in `data_access` will implement all of them by reading and writing `profile.json`.
+
+| Use case | Interface | Methods |
+|---|---|---|
+| UC1 Communicate a Request | `CommunicateRequestDataAccessInterface` | `getBoard()`, `saveMessage(...)` |
+| UC2 Core Message | `CoreMessageDataAccessInterface` | `saveMessage(...)` |
+| UC3 Customize Board | `CustomizeBoardDataAccessInterface` | `getBoard()`, `saveBoard(...)` |
+| UC4 View History | `ViewHistoryDataAccessInterface` | `getHistory()` |
 
 Development and testing use sample data rather than real clinical data.
 
@@ -317,7 +410,7 @@ AACorn is currently in **Phase 1: Framework**.
 |---|---|---|
 | UI design and navigation | Team | Initial design completed |
 | Communication logic | Ruoshui | Implemented and tested |
-| Data model / architecture | Ruohan | In progress |
+| Data model / architecture | Ruohan | Entities, package structure and JSON format completed; UML in progress |
 | ARASAAC API research | Paul | In progress |
 | Swing prototype | Harleen | In progress |
 
@@ -330,15 +423,17 @@ AACorn is currently in **Phase 1: Framework**.
 - message preview and construction
 - communication edge-case tests
 - JUnit configuration
+- `CommunicationBoard`
+- `ChildProfile`
+- Clean Architecture package structure
+- JSON storage format
 
 ### In Progress
 
 - ARASAAC integration
 - Swing GUI
 - UML and Clean Architecture design
-- `CommunicationBoard`
-- `ChildProfile`
-- JSON persistence
+- JSON persistence implementation
 - communication history
 
 ---
