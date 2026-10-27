@@ -253,7 +253,7 @@ getPictograms()
 **Business Rules**
 
 - The same pictogram cannot appear twice on the board (the child can still select it more than once in a draft).
-- The board holds at most 20 pictograms by default.
+- The board holds at most 6 pictograms by default.
 - Removing a pictogram that is not on the board is an error.
 - Pictograms keep the order chosen by the caregiver.
 

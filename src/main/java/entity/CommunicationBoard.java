@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 public final class CommunicationBoard {
 
-    public static final int DEFAULT_CAPACITY = 20;
+    public static final int DEFAULT_CAPACITY = 6;
 
     private final int capacity;
     private final List<Pictogram> pictograms;

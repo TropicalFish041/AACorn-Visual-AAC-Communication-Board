@@ -24,7 +24,7 @@ class CommunicationBoardTest {
     void newBoardIsEmptyWithDefaultCapacity() {
         assertTrue(board.isEmpty());
         assertEquals(0, board.size());
-        assertEquals(20, board.getCapacity());
+        assertEquals(6, board.getCapacity());
     }
 
     @Test
