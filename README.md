@@ -392,9 +392,113 @@ The caregiver can then choose between:
 
 ### UML Class Diagram
 
-**Status:** In progress.
+#### Entities
 
-The initial UML diagram will include the core entities and their relationships as the remaining domain model is finalized.
+```mermaid
+classDiagram
+    class Pictogram {
+        -int id
+        -String label
+        -String imageLocation
+        +getId() int
+        +getLabel() String
+        +getImageLocation() String
+    }
+    class CommunicationBoard {
+        +int DEFAULT_CAPACITY$
+        -int capacity
+        -List~Pictogram~ pictograms
+        +addPictogram(Pictogram) void
+        +removePictogram(Pictogram) void
+        +contains(Pictogram) boolean
+        +isFull() boolean
+        +getPictograms() List~Pictogram~
+    }
+    class CommunicationDraft {
+        -String sentenceStarter
+        -List~Pictogram~ selectedPictograms
+        +addPictogram(Pictogram) void
+        +removeLastPictogram() Pictogram
+        +removePictogramAt(int) Pictogram
+        +repeatPictogramAt(int) void
+        +clear() void
+        +previewText() String
+        +buildMessage(LocalDateTime) CommunicationMessage
+    }
+    class CommunicationMessage {
+        -List~Pictogram~ selectedPictograms
+        -String text
+        -LocalDateTime timestamp
+        +getSelectedPictograms() List~Pictogram~
+        +getText() String
+        +getTimestamp() LocalDateTime
+    }
+    class ChildProfile {
+        -CommunicationBoard board
+        -List~CommunicationMessage~ history
+        +getBoard() CommunicationBoard
+        +addMessage(CommunicationMessage) void
+        +getHistory() List~CommunicationMessage~
+        +hasHistory() boolean
+    }
+    ChildProfile "1" *-- "1" CommunicationBoard : board
+    ChildProfile "1" *-- "0..*" CommunicationMessage : history
+    CommunicationBoard "1" o-- "0..6" Pictogram : pictograms
+    CommunicationMessage "1" o-- "1..*" Pictogram : selectedPictograms
+    CommunicationDraft "1" o-- "0..*" Pictogram : selectedPictograms
+    CommunicationDraft ..> CommunicationMessage : builds
+```
+
+- A `ChildProfile` owns one `CommunicationBoard` and the message history (composition).
+- Boards, drafts and messages refer to `Pictogram`s, which can appear in several places (aggregation).
+- A `CommunicationDraft` builds an immutable `CommunicationMessage`.
+
+#### Data Access
+
+```mermaid
+classDiagram
+    class CommunicateRequestDataAccessInterface {
+        <<interface>>
+        +getBoard() CommunicationBoard
+        +saveMessage(CommunicationMessage) void
+    }
+    class CoreMessageDataAccessInterface {
+        <<interface>>
+        +saveMessage(CommunicationMessage) void
+    }
+    class CustomizeBoardDataAccessInterface {
+        <<interface>>
+        +getBoard() CommunicationBoard
+        +saveBoard(CommunicationBoard) void
+    }
+    class ViewHistoryDataAccessInterface {
+        <<interface>>
+        +getHistory() List~CommunicationMessage~
+    }
+    class PictogramSearchDataAccessInterface {
+        <<interface>>
+        +searchPictograms(String) List~Pictogram~
+    }
+    class FileProfileDataAccessObject {
+        <<planned>>
+        -String filePath
+        -ChildProfile profile
+    }
+    class ArasaacDataAccessObject {
+        <<planned>>
+    }
+    class ChildProfile
+    FileProfileDataAccessObject ..|> CommunicateRequestDataAccessInterface
+    FileProfileDataAccessObject ..|> CoreMessageDataAccessInterface
+    FileProfileDataAccessObject ..|> CustomizeBoardDataAccessInterface
+    FileProfileDataAccessObject ..|> ViewHistoryDataAccessInterface
+    ArasaacDataAccessObject ..|> PictogramSearchDataAccessInterface
+    FileProfileDataAccessObject --> ChildProfile : loads and saves
+```
+
+- Each use case defines only the data access it needs (Interface Segregation).
+- Interfaces live in `use_case`; implementations live in `data_access` (Dependency Inversion).
+- Classes marked `<<planned>>` will be implemented in Phase 2.
 
 ### Sequence Diagrams
 
