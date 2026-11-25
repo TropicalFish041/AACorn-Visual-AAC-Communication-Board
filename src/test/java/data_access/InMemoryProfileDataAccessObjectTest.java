@@ -4,6 +4,7 @@ import entity.ChildProfile;
 import entity.CommunicationMessage;
 import entity.Pictogram;
 import org.junit.jupiter.api.Test;
+import use_case.suggest_things.SuggestThingsDataAccessInterface;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +32,16 @@ class InMemoryProfileDataAccessObjectTest {
         InMemoryProfileDataAccessObject dataAccess =
                 new InMemoryProfileDataAccessObject(new ChildProfile());
 
+        assertTrue(dataAccess.getHistory().isEmpty());
+    }
+
+    @Test
+    void canBeUsedForSuggestions() {
+        ChildProfile profile = new ChildProfile();
+        SuggestThingsDataAccessInterface dataAccess =
+                new InMemoryProfileDataAccessObject(profile);
+
+        assertSame(profile.getBoard(), dataAccess.getBoard());
         assertTrue(dataAccess.getHistory().isEmpty());
     }
 }

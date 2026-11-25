@@ -7,6 +7,7 @@ import use_case.communicate_request.CommunicateRequestDataAccessInterface;
 import use_case.core_message.CoreMessageDataAccessInterface;
 import use_case.customize_board.CustomizeBoardDataAccessInterface;
 import use_case.view_history.ViewHistoryDataAccessInterface;
+import use_case.suggest_things.SuggestThingsDataAccessInterface;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,6 +20,7 @@ public class InMemoryProfileDataAccessObject implements
         CommunicateRequestDataAccessInterface,
         CoreMessageDataAccessInterface,
         CustomizeBoardDataAccessInterface,
+        SuggestThingsDataAccessInterface,
         ViewHistoryDataAccessInterface {
 
     private final ChildProfile profile;
