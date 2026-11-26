@@ -2,21 +2,22 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+import java.util.function.Supplier;
 
 public class AppFrame extends JFrame implements Navigator {
     private final CardLayout cards = new CardLayout();
     private final JPanel root = new JPanel(cards);
 
-    public AppFrame() {
+    public AppFrame(Supplier<List<String>> boardLabels) {
         super("AACorn");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(480, 720);
         setLocationRelativeTo(null);
 
-        root.add(new MainBoardPanel(this), ScreenNames.MAIN);
+        root.add(new MainBoardPanel(this, boardLabels), ScreenNames.MAIN);
         root.add(new PinPanel(this), ScreenNames.PIN);
         root.add(new CaregiverMenuPanel(this), ScreenNames.CAREGIVER_MENU);
-        root.add(new CustomizeBoardPanel(this), ScreenNames.CUSTOMIZE);
         root.add(new SearchPanel(this), ScreenNames.SEARCH);
 
         add(root);

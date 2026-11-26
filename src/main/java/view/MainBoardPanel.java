@@ -2,11 +2,15 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.List;
+import java.util.function.Supplier;
 
 public class MainBoardPanel extends JPanel {
     private final JTextField messageBar = new JTextField();
 
-    public MainBoardPanel(Navigator nav) {
+    public MainBoardPanel(Navigator nav, Supplier<List<String>> boardLabels) {
         setLayout(new BorderLayout(8, 8));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
@@ -27,13 +31,14 @@ public class MainBoardPanel extends JPanel {
         messageBlock.add(new JLabel("My message"), BorderLayout.NORTH);
         messageBlock.add(messageBar, BorderLayout.CENTER);
 
-        // pictogram grid (placeholder text buttons)
         JPanel grid = new JPanel(new GridLayout(2, 3, 8, 8));
-        for (String label : new String[]{"Water", "Food", "Play", "Toilet", "Sleep", "More"}) {
-            JButton b = new JButton(label);
-            b.addActionListener(e -> messageBar.setText(messageBar.getText() + label + " "));
-            grid.add(b);
-        }
+        refreshTiles(grid, boardLabels.get());
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent event) {
+                refreshTiles(grid, boardLabels.get());
+            }
+        });
 
         JButton speak = new JButton("Speak");
         speak.addActionListener(e -> System.out.println("TODO speak: " + messageBar.getText()));
@@ -55,5 +60,20 @@ public class MainBoardPanel extends JPanel {
         add(top, BorderLayout.NORTH);
         add(centre, BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
+    }
+
+    private void refreshTiles(JPanel grid, List<String> labels) {
+        grid.removeAll();
+        for (String label : labels) {
+            JButton button = new JButton(label);
+            button.addActionListener(event -> messageBar.setText(messageBar.getText() + label + " "));
+            grid.add(button);
+        }
+        if (labels.isEmpty()) {
+            grid.add(new JLabel("No pictograms. A caregiver can add them in Customize Board.",
+                    SwingConstants.CENTER));
+        }
+        grid.revalidate();
+        grid.repaint();
     }
 }
