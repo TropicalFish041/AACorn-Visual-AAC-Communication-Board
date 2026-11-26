@@ -40,8 +40,11 @@ public class InMemoryProfileDataAccessObject implements
     @Override
     public void saveBoard(CommunicationBoard board) {
         Objects.requireNonNull(board, "board cannot be null");
+        // Actions that were removed from the board lose their links too.
+        LinkedVocabulary links = profile.getLinks();
+        links.removeLinksNotOn(board);
         // Keep the links and history and replace the board, so a different board is really saved.
-        profile = new ChildProfile(board, profile.getLinks(), profile.getHistory());
+        profile = new ChildProfile(board, links, profile.getHistory());
     }
 
     @Override
