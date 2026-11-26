@@ -5,6 +5,7 @@ import entity.CommunicationMessage;
 import entity.Pictogram;
 import org.junit.jupiter.api.Test;
 import use_case.suggest_things.SuggestThingsDataAccessInterface;
+import entity.CommunicationBoard;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +25,23 @@ class InMemoryProfileDataAccessObjectTest {
 
         dataAccess.saveMessage(message);
 
+        assertEquals(List.of(message), dataAccess.getHistory());
+    }
+
+    @Test
+    void savingADifferentBoardReplacesItAndKeepsHistory() {
+        InMemoryProfileDataAccessObject dataAccess =
+                new InMemoryProfileDataAccessObject(new ChildProfile());
+        CommunicationMessage message = new CommunicationMessage(
+                List.of(new Pictogram(1, "water", "water.png")),
+                "I want water.",
+                LocalDateTime.of(2026, 11, 23, 10, 0));
+        dataAccess.saveMessage(message);
+
+        CommunicationBoard newBoard = new CommunicationBoard();
+        dataAccess.saveBoard(newBoard);
+
+        assertSame(newBoard, dataAccess.getBoard());
         assertEquals(List.of(message), dataAccess.getHistory());
     }
 
