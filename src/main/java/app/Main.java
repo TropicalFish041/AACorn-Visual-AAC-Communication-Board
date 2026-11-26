@@ -1,6 +1,7 @@
 package app;
 
-import data_access.InMemoryProfileDataAccessObject;
+import data_access.ArasaacDataAccessObject;
+import data_access.JsonProfileDataAccessObject;
 import entity.ChildProfile;
 import entity.CommunicationBoard;
 import entity.CommunicationDraft;
@@ -9,17 +10,24 @@ import entity.Pictogram;
 import interface_adapter.communicate_request.CommunicateRequestController;
 import interface_adapter.communicate_request.CommunicateRequestPresenter;
 import interface_adapter.communicate_request.CommunicateRequestViewModel;
+import interface_adapter.customize_board.CustomizeBoardController;
+import interface_adapter.customize_board.CustomizeBoardPresenter;
+import interface_adapter.customize_board.CustomizeBoardViewModel;
 import interface_adapter.view_history.ViewHistoryController;
 import interface_adapter.view_history.ViewHistoryPresenter;
 import interface_adapter.view_history.ViewHistoryViewModel;
 import use_case.communicate_request.CommunicateRequestInteractor;
+import use_case.customize_board.CustomizeBoardInteractor;
 import use_case.view_history.ViewHistoryInteractor;
 import view.AppFrame;
+import view.CustomizeBoardPanel;
 import view.HistoryPanel;
 import view.MainBoardPanel;
 import view.ScreenNames;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +39,15 @@ public class Main {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            InMemoryProfileDataAccessObject dataAccess =
-                    new InMemoryProfileDataAccessObject(
-                            createSampleProfile());
+            JsonProfileDataAccessObject dataAccess;
+            try {
+                dataAccess = new JsonProfileDataAccessObject(
+                        Path.of("data", "profile.json"), createSampleProfile());
+            } catch (IllegalStateException exception) {
+                JOptionPane.showMessageDialog(null, exception.getMessage(),
+                        "Could not load profile", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             CommunicationDraft draft =
                     new CommunicationDraft("I want");
@@ -49,6 +63,8 @@ public class Main {
                     frame,
                     dataAccess);
 
+            addCustomizeBoardUseCase(frame, dataAccess);
+
             frame.show(ScreenNames.MAIN);
             frame.setVisible(true);
         });
@@ -56,7 +72,7 @@ public class Main {
 
     private static void addCommunicateRequestUseCase(
             AppFrame frame,
-            InMemoryProfileDataAccessObject dataAccess,
+            JsonProfileDataAccessObject dataAccess,
             CommunicationDraft draft) {
 
         CommunicateRequestViewModel viewModel =
@@ -84,7 +100,7 @@ public class Main {
 
     private static void addViewHistoryUseCase(
             AppFrame frame,
-            InMemoryProfileDataAccessObject dataAccess) {
+            JsonProfileDataAccessObject dataAccess) {
 
         ViewHistoryViewModel viewModel =
                 new ViewHistoryViewModel();
@@ -108,8 +124,18 @@ public class Main {
                 ScreenNames.HISTORY);
     }
 
+    private static void addCustomizeBoardUseCase(AppFrame frame,
+                                                 JsonProfileDataAccessObject dataAccess) {
+        CustomizeBoardViewModel viewModel = new CustomizeBoardViewModel();
+        CustomizeBoardPresenter presenter = new CustomizeBoardPresenter(viewModel, SwingUtilities::invokeLater);
+        CustomizeBoardInteractor interactor = new CustomizeBoardInteractor(
+                dataAccess, new ArasaacDataAccessObject(), presenter);
+        CustomizeBoardController controller = new CustomizeBoardController(interactor);
+        frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel), ScreenNames.CUSTOMIZE);
+    }
+
     /**
-     * Sample data for development only.
+     * Sample data for development when no saved profile exists.
      */
     private static ChildProfile createSampleProfile() {
         CommunicationBoard board = new CommunicationBoard();

@@ -21,7 +21,6 @@ public class AppFrame extends JFrame implements Navigator {
 
         root.add(new PinPanel(this), ScreenNames.PIN);
         root.add(new CaregiverMenuPanel(this), ScreenNames.CAREGIVER_MENU);
-        root.add(new CustomizeBoardPanel(this), ScreenNames.CUSTOMIZE);
         root.add(new SearchPanel(this), ScreenNames.SEARCH);
 
         add(root);
