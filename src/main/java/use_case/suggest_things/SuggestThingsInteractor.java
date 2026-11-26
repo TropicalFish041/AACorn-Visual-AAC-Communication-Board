@@ -2,6 +2,7 @@ package use_case.suggest_things;
 
 import entity.CommunicationBoard;
 import entity.CommunicationMessage;
+import entity.LinkedVocabulary;
 import entity.Pictogram;
 
 import java.util.ArrayList;
@@ -18,13 +19,14 @@ import java.util.Objects;
  *   <li>Things the child has used with this action before (most used first).</li>
  *   <li>Things from the built-in starter list.</li>
  * </ol>
- * Things already linked to the action are skipped, and the board is never changed here:
+ * Things already linked to the action are skipped, and nothing is changed here:
  * the caregiver decides what to add.
  */
 public class SuggestThingsInteractor implements SuggestThingsInputBoundary {
 
     static final int MAX_SUGGESTIONS = 6;
     static final String ACTION_NOT_FOUND_MESSAGE = "This action is not on the board.";
+    static final String NOT_AN_ACTION_MESSAGE = "Suggestions are only for actions.";
     static final String NO_SUGGESTIONS_MESSAGE = "No suggestions yet. Search to add a thing.";
 
     private final SuggestThingsDataAccessInterface profileDataAccess;
@@ -43,26 +45,30 @@ public class SuggestThingsInteractor implements SuggestThingsInputBoundary {
 
     @Override
     public void execute(SuggestThingsInputData inputData) {
-        CommunicationBoard board = profileDataAccess.getBoard();
-
-        Pictogram action = findAction(board, inputData.getActionId());
+        Pictogram action = findOnBoard(profileDataAccess.getBoard(), inputData.getActionId());
         if (action == null) {
             presenter.prepareFailView(ACTION_NOT_FOUND_MESSAGE);
             return;
         }
+        if (!action.isAction()) {
+            presenter.prepareFailView(NOT_AN_ACTION_MESSAGE);
+            return;
+        }
 
-        List<Pictogram> alreadyLinked = board.getThings(action);
+        LinkedVocabulary links = profileDataAccess.getLinks();
+        List<Pictogram> alreadyLinked = links.getThings(action);
         List<SuggestThingsOutputData.Suggestion> suggestions = new ArrayList<>();
         List<Pictogram> added = new ArrayList<>();
 
         // 1. From history (most used first).
-        for (Pictogram thing : rankThingsFromHistory(action)) {
-            addSuggestion(thing, true, alreadyLinked, added, suggestions);
+        Map<Pictogram, Integer> counts = countThingsUsedWith(action);
+        for (Map.Entry<Pictogram, Integer> entry : rank(counts)) {
+            addSuggestion(entry.getKey(), entry.getValue(), alreadyLinked, added, suggestions);
         }
 
         // 2. From the starter list.
         for (Pictogram thing : starterDataAccess.getStarterThings(action.getLabel())) {
-            addSuggestion(thing, false, alreadyLinked, added, suggestions);
+            addSuggestion(thing, 0, alreadyLinked, added, suggestions);
         }
 
         if (suggestions.isEmpty()) {
@@ -74,11 +80,11 @@ public class SuggestThingsInteractor implements SuggestThingsInputBoundary {
                 new SuggestThingsOutputData(action.getLabel(), suggestions));
     }
 
-    /** Returns the action on the board with this id, or null if there is none. */
-    private Pictogram findAction(CommunicationBoard board, int actionId) {
-        for (Pictogram action : board.getActions()) {
-            if (action.getId() == actionId) {
-                return action;
+    /** Returns the pictogram on the board with this id, or null if there is none. */
+    private Pictogram findOnBoard(CommunicationBoard board, int id) {
+        for (Pictogram pictogram : board.getPictograms()) {
+            if (pictogram.getId() == id) {
+                return pictogram;
             }
         }
         return null;
@@ -88,7 +94,7 @@ public class SuggestThingsInteractor implements SuggestThingsInputBoundary {
      * Counts the things that appeared in the same message as this action.
      * Newer messages are looked at first, so on a tie the more recent thing comes first.
      */
-    private List<Pictogram> rankThingsFromHistory(Pictogram action) {
+    private Map<Pictogram, Integer> countThingsUsedWith(Pictogram action) {
         List<CommunicationMessage> history = profileDataAccess.getHistory();
         Map<Pictogram, Integer> counts = new LinkedHashMap<>();
 
@@ -103,15 +109,18 @@ public class SuggestThingsInteractor implements SuggestThingsInputBoundary {
                 }
             }
         }
+        return counts;
+    }
 
-        List<Pictogram> ranked = new ArrayList<>(counts.keySet());
-        // A stable sort, so ties keep the "most recent first" order.
-        ranked.sort((a, b) -> counts.get(b) - counts.get(a));
+    /** Most used first. A stable sort, so ties keep the "most recent first" order. */
+    private List<Map.Entry<Pictogram, Integer>> rank(Map<Pictogram, Integer> counts) {
+        List<Map.Entry<Pictogram, Integer>> ranked = new ArrayList<>(counts.entrySet());
+        ranked.sort((a, b) -> b.getValue() - a.getValue());
         return ranked;
     }
 
     private void addSuggestion(Pictogram thing,
-                               boolean fromHistory,
+                               int timesUsed,
                                List<Pictogram> alreadyLinked,
                                List<Pictogram> added,
                                List<SuggestThingsOutputData.Suggestion> suggestions) {
@@ -123,6 +132,6 @@ public class SuggestThingsInteractor implements SuggestThingsInputBoundary {
         }
         added.add(thing);
         suggestions.add(new SuggestThingsOutputData.Suggestion(
-                thing.getId(), thing.getLabel(), thing.getImageLocation(), fromHistory));
+                thing.getId(), thing.getLabel(), thing.getImageLocation(), timesUsed));
     }
 }

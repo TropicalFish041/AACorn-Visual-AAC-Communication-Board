@@ -8,11 +8,9 @@ import java.util.List;
 
 /**
  * Turns the suggestions into text for the screen,
- * e.g. the title "Suggestions for play" and the hint "Used before".
+ * e.g. the title "Suggestions for play" and the hint "Used 3 times".
  */
 public class SuggestThingsPresenter implements SuggestThingsOutputBoundary {
-
-    static final String USED_BEFORE_HINT = "Used before";
 
     private final SuggestThingsViewModel viewModel;
 
@@ -28,7 +26,7 @@ public class SuggestThingsPresenter implements SuggestThingsOutputBoundary {
                     suggestion.getId(),
                     suggestion.getLabel(),
                     suggestion.getImageLocation(),
-                    suggestion.isFromHistory() ? USED_BEFORE_HINT : ""));
+                    usageHint(suggestion.getTimesUsed())));
         }
 
         SuggestThingsState state = viewModel.getState();
@@ -45,5 +43,16 @@ public class SuggestThingsPresenter implements SuggestThingsOutputBoundary {
         state.setSuggestions(new ArrayList<>());
         state.setErrorMessage(errorMessage);
         viewModel.firePropertyChange();
+    }
+
+    /** "Used once", "Used 3 times", or "" for starter suggestions. */
+    static String usageHint(int timesUsed) {
+        if (timesUsed <= 0) {
+            return "";
+        }
+        if (timesUsed == 1) {
+            return "Used once";
+        }
+        return "Used " + timesUsed + " times";
     }
 }

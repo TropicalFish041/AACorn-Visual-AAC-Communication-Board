@@ -2,6 +2,7 @@ package use_case.suggest_things;
 
 import entity.CommunicationBoard;
 import entity.CommunicationMessage;
+import entity.LinkedVocabulary;
 
 import java.util.List;
 
@@ -11,6 +12,8 @@ import java.util.List;
 public interface SuggestThingsDataAccessInterface {
 
     CommunicationBoard getBoard();
+
+    LinkedVocabulary getLinks();
 
     List<CommunicationMessage> getHistory();
 }

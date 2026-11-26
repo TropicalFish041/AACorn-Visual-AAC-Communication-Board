@@ -68,7 +68,7 @@ public class SuggestThingsState {
             return imageLocation;
         }
 
-        /** A small note under the card, e.g. "Used before", or "" for none. */
+        /** A small note under the card, e.g. "Used 3 times", or "" for none. */
         public String getHint() {
             return hint;
         }

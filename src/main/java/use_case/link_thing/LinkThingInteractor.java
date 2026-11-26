@@ -1,6 +1,6 @@
 package use_case.link_thing;
 
-import entity.CommunicationBoard;
+import entity.LinkedVocabulary;
 import entity.Pictogram;
 import entity.WordType;
 
@@ -8,12 +8,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Links a thing to an action on the board (e.g. "ball" under "play") and saves the board.
+ * Links a thing to an action on the board (e.g. "ball" under "play") and saves the links.
  * Used when the caregiver picks a suggestion, and can also be used after a search.
  */
 public class LinkThingInteractor implements LinkThingInputBoundary {
 
     static final String ACTION_NOT_FOUND_MESSAGE = "This action is not on the board.";
+    static final String NOT_AN_ACTION_MESSAGE = "Things can only be added under an action.";
 
     private final LinkThingDataAccessInterface dataAccess;
     private final LinkThingOutputBoundary presenter;
@@ -26,11 +27,13 @@ public class LinkThingInteractor implements LinkThingInputBoundary {
 
     @Override
     public void execute(LinkThingInputData inputData) {
-        CommunicationBoard board = dataAccess.getBoard();
-
-        Pictogram action = findAction(board, inputData.getActionId());
+        Pictogram action = findOnBoard(inputData.getActionId());
         if (action == null) {
             presenter.prepareFailView(ACTION_NOT_FOUND_MESSAGE);
+            return;
+        }
+        if (!action.isAction()) {
+            presenter.prepareFailView(NOT_AN_ACTION_MESSAGE);
             return;
         }
 
@@ -44,30 +47,31 @@ public class LinkThingInteractor implements LinkThingInputBoundary {
         }
 
         // Check the rules first so the caregiver gets a friendly message
-        // instead of an exception from the board.
-        List<Pictogram> things = board.getThings(action);
+        // instead of an exception from LinkedVocabulary.
+        LinkedVocabulary links = dataAccess.getLinks();
+        List<Pictogram> things = links.getThings(action);
         if (things.contains(thing)) {
             presenter.prepareFailView(
                     thing.getLabel() + " is already under " + action.getLabel() + ".");
             return;
         }
-        if (things.size() >= CommunicationBoard.MAX_THINGS_PER_ACTION) {
+        if (things.size() >= LinkedVocabulary.MAX_THINGS_PER_ACTION) {
             presenter.prepareFailView(action.getLabel() + " already has "
-                    + CommunicationBoard.MAX_THINGS_PER_ACTION + " things. Remove one first.");
+                    + LinkedVocabulary.MAX_THINGS_PER_ACTION + " things. Remove one first.");
             return;
         }
 
-        board.addThing(action, thing);
-        dataAccess.saveBoard(board);
+        links.link(action, thing);
+        dataAccess.saveLinks(links);
         presenter.prepareSuccessView(
                 new LinkThingOutputData(action.getLabel(), thing.getLabel()));
     }
 
-    /** Returns the action on the board with this id, or null if there is none. */
-    private Pictogram findAction(CommunicationBoard board, int actionId) {
-        for (Pictogram action : board.getActions()) {
-            if (action.getId() == actionId) {
-                return action;
+    /** Returns the pictogram on the board with this id, or null if there is none. */
+    private Pictogram findOnBoard(int id) {
+        for (Pictogram pictogram : dataAccess.getBoard().getPictograms()) {
+            if (pictogram.getId() == id) {
+                return pictogram;
             }
         }
         return null;

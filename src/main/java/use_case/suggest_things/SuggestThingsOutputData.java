@@ -34,13 +34,13 @@ public class SuggestThingsOutputData {
         private final int id;
         private final String label;
         private final String imageLocation;
-        private final boolean fromHistory;
+        private final int timesUsed;
 
-        public Suggestion(int id, String label, String imageLocation, boolean fromHistory) {
+        public Suggestion(int id, String label, String imageLocation, int timesUsed) {
             this.id = id;
             this.label = label;
             this.imageLocation = imageLocation;
-            this.fromHistory = fromHistory;
+            this.timesUsed = timesUsed;
         }
 
         public int getId() {
@@ -55,9 +55,12 @@ public class SuggestThingsOutputData {
             return imageLocation;
         }
 
-        /** True if the child has used this thing with the action before. */
-        public boolean isFromHistory() {
-            return fromHistory;
+        /**
+         * How many past messages used this thing together with the action.
+         * 0 means it comes from the starter list.
+         */
+        public int getTimesUsed() {
+            return timesUsed;
         }
     }
 }

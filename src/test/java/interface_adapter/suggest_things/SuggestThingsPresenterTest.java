@@ -19,8 +19,8 @@ class SuggestThingsPresenterTest {
         SuggestThingsPresenter presenter = new SuggestThingsPresenter(viewModel);
 
         presenter.prepareSuccessView(new SuggestThingsOutputData("play", List.of(
-                new SuggestThingsOutputData.Suggestion(10, "toy", "toy.png", true),
-                new SuggestThingsOutputData.Suggestion(11, "ball", "ball.png", false))));
+                new SuggestThingsOutputData.Suggestion(10, "toy", "toy.png", 3),
+                new SuggestThingsOutputData.Suggestion(11, "ball", "ball.png", 0))));
 
         SuggestThingsState state = viewModel.getState();
         assertEquals("Suggestions for play", state.getTitle());
@@ -30,7 +30,7 @@ class SuggestThingsPresenterTest {
         assertEquals(10, first.getId());
         assertEquals("toy", first.getLabel());
         assertEquals("toy.png", first.getImageLocation());
-        assertEquals(SuggestThingsPresenter.USED_BEFORE_HINT, first.getHint());
+        assertEquals("Used 3 times", first.getHint());
         assertEquals("", state.getSuggestions().get(1).getHint());
 
         assertNull(state.getErrorMessage());
@@ -38,11 +38,18 @@ class SuggestThingsPresenterTest {
     }
 
     @Test
+    void usageHintWording() {
+        assertEquals("", SuggestThingsPresenter.usageHint(0));
+        assertEquals("Used once", SuggestThingsPresenter.usageHint(1));
+        assertEquals("Used 2 times", SuggestThingsPresenter.usageHint(2));
+    }
+
+    @Test
     void failShowsErrorAndClearsOldSuggestions() {
         SuggestThingsViewModel viewModel = new SuggestThingsViewModel();
         SuggestThingsPresenter presenter = new SuggestThingsPresenter(viewModel);
         presenter.prepareSuccessView(new SuggestThingsOutputData("play", List.of(
-                new SuggestThingsOutputData.Suggestion(10, "toy", "toy.png", false))));
+                new SuggestThingsOutputData.Suggestion(10, "toy", "toy.png", 0))));
 
         presenter.prepareFailView("No suggestions yet.");
 

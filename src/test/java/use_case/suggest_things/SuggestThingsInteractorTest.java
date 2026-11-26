@@ -2,6 +2,7 @@ package use_case.suggest_things;
 
 import entity.CommunicationBoard;
 import entity.CommunicationMessage;
+import entity.LinkedVocabulary;
 import entity.Pictogram;
 import entity.WordType;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SuggestThingsInteractorTest {
 
@@ -26,6 +25,7 @@ class SuggestThingsInteractorTest {
     private final Pictogram apple = new Pictogram(13, "apple", "apple.png", WordType.THING);
 
     private CommunicationBoard board;
+    private LinkedVocabulary links;
     private List<CommunicationMessage> history;
     private List<Pictogram> starterThings;
     private RecordingPresenter presenter;
@@ -34,7 +34,8 @@ class SuggestThingsInteractorTest {
     @BeforeEach
     void setUp() {
         board = new CommunicationBoard();
-        board.addAction(play);
+        board.addPictogram(play);
+        links = new LinkedVocabulary();
         history = new ArrayList<>();
         starterThings = new ArrayList<>();
         presenter = new RecordingPresenter();
@@ -43,6 +44,11 @@ class SuggestThingsInteractorTest {
             @Override
             public CommunicationBoard getBoard() {
                 return board;
+            }
+
+            @Override
+            public LinkedVocabulary getLinks() {
+                return links;
             }
 
             @Override
@@ -64,7 +70,7 @@ class SuggestThingsInteractorTest {
 
         assertEquals("play", presenter.output.getActionLabel());
         assertEquals(List.of("ball", "toy", "park"), labels(presenter.output));
-        assertFalse(presenter.output.getSuggestions().get(0).isFromHistory());
+        assertEquals(0, presenter.output.getSuggestions().get(0).getTimesUsed());
     }
 
     @Test
@@ -78,13 +84,26 @@ class SuggestThingsInteractorTest {
 
         // toy used twice, park once, then ball from the starter list (toy not repeated)
         assertEquals(List.of("toy", "park", "ball"), labels(presenter.output));
-        assertTrue(presenter.output.getSuggestions().get(0).isFromHistory());
-        assertFalse(presenter.output.getSuggestions().get(2).isFromHistory());
+        assertEquals(List.of(2, 1, 0), timesUsed(presenter.output));
+    }
+
+    @Test
+    void countsTheSameThingFromDifferentMessagesTogether() {
+        // Each message has its own Pictogram objects, like data loaded from a file.
+        history.add(message(new Pictogram(1, "play", "play.png", WordType.ACTION),
+                new Pictogram(10, "ball", "ball.png", WordType.THING)));
+        history.add(message(new Pictogram(1, "play", "play.png", WordType.ACTION),
+                new Pictogram(10, "ball", "ball.png", WordType.THING)));
+
+        interactor.execute(new SuggestThingsInputData(play.getId()));
+
+        assertEquals(List.of("ball"), labels(presenter.output));
+        assertEquals(List.of(2), timesUsed(presenter.output));
     }
 
     @Test
     void ignoresMessagesWithoutThisAction() {
-        board.addAction(eat);
+        board.addPictogram(eat);
         history.add(message(eat, apple));
         starterThings.add(ball);
 
@@ -95,7 +114,7 @@ class SuggestThingsInteractorTest {
 
     @Test
     void skipsThingsAlreadyLinked() {
-        board.addThing(play, ball);
+        links.link(play, ball);
         starterThings.addAll(List.of(ball, toy));
 
         interactor.execute(new SuggestThingsInputData(play.getId()));
@@ -124,6 +143,16 @@ class SuggestThingsInteractorTest {
     }
 
     @Test
+    void failsForAThingOnTheBoard() {
+        board.addPictogram(apple);
+
+        interactor.execute(new SuggestThingsInputData(apple.getId()));
+
+        assertNull(presenter.output);
+        assertEquals(SuggestThingsInteractor.NOT_AN_ACTION_MESSAGE, presenter.error);
+    }
+
+    @Test
     void failsWhenThereAreNoSuggestions() {
         interactor.execute(new SuggestThingsInputData(play.getId()));
 
@@ -141,6 +170,14 @@ class SuggestThingsInteractorTest {
             labels.add(suggestion.getLabel());
         }
         return labels;
+    }
+
+    private static List<Integer> timesUsed(SuggestThingsOutputData output) {
+        List<Integer> counts = new ArrayList<>();
+        for (SuggestThingsOutputData.Suggestion suggestion : output.getSuggestions()) {
+            counts.add(suggestion.getTimesUsed());
+        }
+        return counts;
     }
 
     private static class RecordingPresenter implements SuggestThingsOutputBoundary {

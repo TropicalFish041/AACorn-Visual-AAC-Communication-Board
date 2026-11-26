@@ -6,6 +6,8 @@ import entity.Pictogram;
 import org.junit.jupiter.api.Test;
 import use_case.suggest_things.SuggestThingsDataAccessInterface;
 import entity.CommunicationBoard;
+import entity.LinkedVocabulary;
+import entity.WordType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,6 +62,24 @@ class InMemoryProfileDataAccessObjectTest {
                 new InMemoryProfileDataAccessObject(profile);
 
         assertSame(profile.getBoard(), dataAccess.getBoard());
+        assertSame(profile.getLinks(), dataAccess.getLinks());
         assertTrue(dataAccess.getHistory().isEmpty());
+    }
+
+    @Test
+    void savingLinksAndBoardKeepsEachOther() {
+        InMemoryProfileDataAccessObject dataAccess =
+                new InMemoryProfileDataAccessObject(new ChildProfile());
+        Pictogram play = new Pictogram(5, "play", "play.png", WordType.ACTION);
+        Pictogram ball = new Pictogram(6, "ball", "ball.png", WordType.THING);
+
+        LinkedVocabulary newLinks = new LinkedVocabulary();
+        newLinks.link(play, ball);
+        dataAccess.saveLinks(newLinks);
+        CommunicationBoard newBoard = new CommunicationBoard();
+        dataAccess.saveBoard(newBoard);
+
+        assertSame(newBoard, dataAccess.getBoard());
+        assertEquals(List.of(ball), dataAccess.getLinks().getThings(play));
     }
 }

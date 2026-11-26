@@ -3,6 +3,7 @@ package data_access;
 import entity.ChildProfile;
 import entity.CommunicationBoard;
 import entity.CommunicationMessage;
+import entity.LinkedVocabulary;
 import use_case.communicate_request.CommunicateRequestDataAccessInterface;
 import use_case.core_message.CoreMessageDataAccessInterface;
 import use_case.customize_board.CustomizeBoardDataAccessInterface;
@@ -41,6 +42,18 @@ public class InMemoryProfileDataAccessObject implements
         Objects.requireNonNull(board, "board cannot be null");
         // Keep the links and history and replace the board, so a different board is really saved.
         profile = new ChildProfile(board, profile.getLinks(), profile.getHistory());
+    }
+
+    @Override
+    public LinkedVocabulary getLinks() {
+        return profile.getLinks();
+    }
+
+    @Override
+    public void saveLinks(LinkedVocabulary links) {
+        Objects.requireNonNull(links, "links cannot be null");
+        // Keep the board and history and replace the links.
+        profile = new ChildProfile(profile.getBoard(), links, profile.getHistory());
     }
 
     @Override
