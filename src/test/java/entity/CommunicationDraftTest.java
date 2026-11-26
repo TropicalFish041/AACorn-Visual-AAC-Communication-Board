@@ -112,4 +112,61 @@ class CommunicationDraftTest {
         assertEquals("I want water.", message.getText());
         assertEquals(List.of(water), message.getSelectedPictograms());
     }
+
+    @Test
+    void firstActionAddsTo() {
+        Pictogram sleep = new Pictogram(3, "sleep", "sleep.png", WordType.ACTION);
+        draft.addPictogram(sleep);
+
+        assertEquals("I want to sleep.", draft.previewText());
+    }
+
+    @Test
+    void actionFollowedByThingUsesSameTextInCompletedMessage() {
+        Pictogram play = new Pictogram(4, "play", "play.png", WordType.ACTION);
+        Pictogram ball = new Pictogram(5, "ball", "ball.png", WordType.THING);
+        draft.addPictogram(play);
+        draft.addPictogram(ball);
+
+        assertEquals("I want to play ball.", draft.previewText());
+        CommunicationMessage message = draft.buildMessage(LocalDateTime.now());
+        assertEquals(draft.previewText(), message.getText());
+        assertEquals(List.of(play, ball), message.getSelectedPictograms());
+
+        draft.removeLastPictogram();
+        assertEquals("I want to play.", draft.previewText());
+        assertEquals("I want to play ball.", message.getText());
+    }
+
+    @Test
+    void thingFirstDoesNotAddToBeforeLaterAction() {
+        Pictogram sleep = new Pictogram(3, "sleep", "sleep.png", WordType.ACTION);
+        draft.addPictogram(water);
+        draft.addPictogram(sleep);
+
+        assertEquals("I want water sleep.", draft.previewText());
+
+        draft.removePictogramAt(0);
+        assertEquals("I want to sleep.", draft.previewText());
+        draft.clear();
+        assertEquals("I want", draft.previewText());
+    }
+
+    @Test
+    void repeatingAnActionDoesNotInsertAnotherTo() {
+        Pictogram sleep = new Pictogram(3, "sleep", "sleep.png", WordType.ACTION);
+        draft.addPictogram(sleep);
+        draft.repeatPictogramAt(0);
+
+        assertEquals("I want to sleep sleep.", draft.previewText());
+        assertEquals(List.of(sleep, sleep), draft.getSelectedPictograms());
+    }
+
+    @Test
+    void otherSentenceStartersKeepExistingFormatting() {
+        CommunicationDraft otherDraft = new CommunicationDraft("I can");
+        otherDraft.addPictogram(new Pictogram(3, "sleep", "sleep.png", WordType.ACTION));
+
+        assertEquals("I can sleep.", otherDraft.previewText());
+    }
 }

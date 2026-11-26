@@ -82,7 +82,7 @@ public final class CommunicationDraft {
 
     /**
      * Returns the text currently represented by the draft.
-     * Example: "I want water apple."
+     * For "I want", inserts "to" only if the first pictogram is an action.
      */
     public String previewText() {
         if (selectedPictograms.isEmpty()) {
@@ -93,7 +93,9 @@ public final class CommunicationDraft {
                 .map(Pictogram::getLabel)
                 .collect(Collectors.joining(" "));
 
-        return sentenceStarter + " " + labels + ".";
+        String separator = "I want".equals(sentenceStarter)
+                && selectedPictograms.get(0).isAction() ? " to " : " ";
+        return sentenceStarter + separator + labels + ".";
     }
 
     /**
