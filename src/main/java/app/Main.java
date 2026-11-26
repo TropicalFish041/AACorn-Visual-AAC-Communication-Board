@@ -2,21 +2,28 @@ package app;
 
 import data_access.ArasaacDataAccessObject;
 import data_access.JsonProfileDataAccessObject;
+import data_access.StarterThingsDataAccessObject;
 import entity.ChildProfile;
 import entity.CommunicationMessage;
 import entity.Pictogram;
+import entity.WordType;
 import interface_adapter.customize_board.CustomizeBoardController;
 import interface_adapter.customize_board.CustomizeBoardPresenter;
 import interface_adapter.customize_board.CustomizeBoardViewModel;
+import interface_adapter.suggest_things.SuggestThingsController;
+import interface_adapter.suggest_things.SuggestThingsPresenter;
+import interface_adapter.suggest_things.SuggestThingsViewModel;
 import interface_adapter.view_history.ViewHistoryController;
 import interface_adapter.view_history.ViewHistoryPresenter;
 import interface_adapter.view_history.ViewHistoryViewModel;
 import use_case.customize_board.CustomizeBoardInteractor;
+import use_case.suggest_things.SuggestThingsInteractor;
 import use_case.view_history.ViewHistoryInteractor;
 import view.AppFrame;
 import view.CustomizeBoardPanel;
 import view.HistoryPanel;
 import view.ScreenNames;
+import view.SuggestionsStrip;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -65,10 +72,24 @@ public class Main {
                                                  JsonProfileDataAccessObject dataAccess) {
         CustomizeBoardViewModel viewModel = new CustomizeBoardViewModel();
         CustomizeBoardPresenter presenter = new CustomizeBoardPresenter(viewModel, SwingUtilities::invokeLater);
+        ArasaacDataAccessObject arasaac = new ArasaacDataAccessObject();
         CustomizeBoardInteractor interactor = new CustomizeBoardInteractor(
-                dataAccess, new ArasaacDataAccessObject(), presenter);
+                dataAccess, arasaac, presenter);
         CustomizeBoardController controller = new CustomizeBoardController(interactor);
-        frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel), ScreenNames.CUSTOMIZE);
+        frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel,
+                createSuggestionsStrip(dataAccess, arasaac)), ScreenNames.CUSTOMIZE);
+    }
+
+    /**
+     * UC6: suggested things for the selected action, shown inside the customize screen.
+     */
+    private static SuggestionsStrip createSuggestionsStrip(JsonProfileDataAccessObject dataAccess,
+                                                           ArasaacDataAccessObject arasaac) {
+        SuggestThingsViewModel viewModel = new SuggestThingsViewModel();
+        SuggestThingsInteractor interactor = new SuggestThingsInteractor(
+                dataAccess, new StarterThingsDataAccessObject(arasaac),
+                new SuggestThingsPresenter(viewModel));
+        return new SuggestionsStrip(new SuggestThingsController(interactor), viewModel);
     }
 
     /**
@@ -78,7 +99,18 @@ public class Main {
         ChildProfile profile = new ChildProfile();
         Pictogram water = new Pictogram(1, "water", "water.png");
         Pictogram apple = new Pictogram(2, "apple", "apple.png");
+        Pictogram play = new Pictogram(3, "play", "play.png", WordType.ACTION);
+        Pictogram eat = new Pictogram(4, "eat", "eat.png", WordType.ACTION);
+        Pictogram ball = new Pictogram(5, "ball", "ball.png");
+        profile.getBoard().addPictogram(water);
+        profile.getBoard().addPictogram(play);
+        profile.getBoard().addPictogram(eat);
         LocalDateTime now = LocalDateTime.now();
+
+        profile.addMessage(new CommunicationMessage(
+                List.of(play, ball), "I want to play ball.", now.minusDays(2).withHour(9).withMinute(5)));
+        profile.addMessage(new CommunicationMessage(
+                List.of(play, ball), "I want to play ball.", now.minusDays(2).withHour(16).withMinute(40)));
 
         profile.addMessage(new CommunicationMessage(
                 List.of(apple), "I want apple.", now.minusDays(1).withHour(15).withMinute(20)));

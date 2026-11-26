@@ -33,17 +33,25 @@ public final class CustomizeBoardPanel extends JPanel {
     private final JComboBox<String> type = new JComboBox<>(new String[]{"Thing", "Action"});
     private Board shownBoard;
     private SearchResults shownResults;
+    private final SuggestionsStrip suggestions;   // UC6
 
     public CustomizeBoardPanel(Navigator nav, CustomizeBoardController controller,
-                               CustomizeBoardViewModel viewModel) {
+                               CustomizeBoardViewModel viewModel, SuggestionsStrip suggestions) {
         this.controller = controller;
+        this.suggestions = suggestions;
+        // UC6: a picked suggestion is linked through the normal customize use case.
+        suggestions.setOnPick(item -> controller.linkThing(boardTiles.getSelectedValue().getId(),
+                new PictogramData(item.getId(), item.getLabel(), item.getImageLocation(), false)));
         setLayout(new BorderLayout());
         add(new HeaderBar(nav, ScreenNames.CAREGIVER_MENU, "Customize Board"), BorderLayout.NORTH);
 
         JPanel editor = new JPanel(new GridLayout(3, 1, 0, 8));
         editor.setBorder(BorderFactory.createEmptyBorder(0, 12, 8, 12));
         editor.add(listSection(boardTitle, boardTiles, remove));
-        editor.add(listSection(linkTitle, linkedTiles, unlink));
+        JPanel linkedArea = new JPanel(new BorderLayout());
+        linkedArea.add(listSection(linkTitle, linkedTiles, unlink), BorderLayout.CENTER);
+        linkedArea.add(suggestions, BorderLayout.SOUTH);   // UC6
+        editor.add(linkedArea);
         editor.add(searchSection());
         add(editor, BorderLayout.CENTER);
         add(boardMessage, BorderLayout.SOUTH);
@@ -200,6 +208,11 @@ public final class CustomizeBoardPanel extends JPanel {
         List<PictogramData> things = actionSelected
                 ? shownBoard.linkedThings.getOrDefault(tile.getId(), List.of()) : List.of();
         showTiles(linkedTiles, things, selection);
+        if (actionSelected) {
+            suggestions.showFor(tile.getId());   // UC6
+        } else {
+            suggestions.clear();
+        }
         updateButtons();
     }
 

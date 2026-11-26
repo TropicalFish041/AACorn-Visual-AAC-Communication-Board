@@ -9,7 +9,6 @@ import use_case.core_message.CoreMessageDataAccessInterface;
 import use_case.customize_board.CustomizeBoardDataAccessInterface;
 import use_case.view_history.ViewHistoryDataAccessInterface;
 import use_case.suggest_things.SuggestThingsDataAccessInterface;
-import use_case.link_thing.LinkThingDataAccessInterface;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +21,6 @@ public class InMemoryProfileDataAccessObject implements
         CommunicateRequestDataAccessInterface,
         CoreMessageDataAccessInterface,
         CustomizeBoardDataAccessInterface,
-        LinkThingDataAccessInterface,
         SuggestThingsDataAccessInterface,
         ViewHistoryDataAccessInterface {
 
@@ -50,13 +48,6 @@ public class InMemoryProfileDataAccessObject implements
     @Override
     public LinkedVocabulary getLinks() {
         return profile.getLinks();
-    }
-
-    @Override
-    public void saveLinks(LinkedVocabulary links) {
-        Objects.requireNonNull(links, "links cannot be null");
-        // Keep the board and history and replace the links.
-        profile = new ChildProfile(profile.getBoard(), links, profile.getHistory());
     }
 
     @Override
