@@ -39,10 +39,11 @@ public class MainBoardPanel extends JPanel {
         this.viewModel = viewModel;
         buildUi();
         viewModel.addPropertyChangeListener(event -> render(viewModel.getState()));
-        // Refresh after caregiver edits, even if the DAO replaces the board object.
+        // Refresh after caregiver edits; retry previously unavailable images on return.
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent event) {
+                displayedItems = null;
                 controller.loadBoard();
             }
         });
