@@ -1,20 +1,29 @@
 package app;
 
-import data_access.InMemoryProfileDataAccessObject;
+import data_access.ArasaacDataAccessObject;
+import data_access.JsonProfileDataAccessObject;
 import entity.ChildProfile;
 import entity.CommunicationMessage;
 import entity.Pictogram;
+import interface_adapter.customize_board.CustomizeBoardController;
+import interface_adapter.customize_board.CustomizeBoardPresenter;
+import interface_adapter.customize_board.CustomizeBoardViewModel;
 import interface_adapter.view_history.ViewHistoryController;
 import interface_adapter.view_history.ViewHistoryPresenter;
 import interface_adapter.view_history.ViewHistoryViewModel;
+import use_case.customize_board.CustomizeBoardInteractor;
 import use_case.view_history.ViewHistoryInteractor;
 import view.AppFrame;
+import view.CustomizeBoardPanel;
 import view.HistoryPanel;
 import view.ScreenNames;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Builds the app: creates the data access, use cases and screens,
@@ -24,17 +33,26 @@ public class Main {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            InMemoryProfileDataAccessObject dataAccess =
-                    new InMemoryProfileDataAccessObject(createSampleProfile());
+            JsonProfileDataAccessObject dataAccess;
+            try {
+                dataAccess = new JsonProfileDataAccessObject(
+                        Path.of("data", "profile.json"), createSampleProfile());
+            } catch (IllegalStateException exception) {
+                JOptionPane.showMessageDialog(null, exception.getMessage(),
+                        "Could not load profile", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-            AppFrame frame = new AppFrame();
+            AppFrame frame = new AppFrame(() -> dataAccess.getBoard().getPictograms().stream()
+                    .map(Pictogram::getLabel).collect(Collectors.toList()));
+            addCustomizeBoardUseCase(frame, dataAccess);
             addViewHistoryUseCase(frame, dataAccess);
             frame.setVisible(true);
         });
     }
 
     private static void addViewHistoryUseCase(AppFrame frame,
-                                              InMemoryProfileDataAccessObject dataAccess) {
+                                              JsonProfileDataAccessObject dataAccess) {
         ViewHistoryViewModel viewModel = new ViewHistoryViewModel();
         ViewHistoryPresenter presenter = new ViewHistoryPresenter(viewModel);
         ViewHistoryInteractor interactor = new ViewHistoryInteractor(dataAccess, presenter);
@@ -43,8 +61,18 @@ public class Main {
         frame.addScreen(new HistoryPanel(frame, controller, viewModel), ScreenNames.HISTORY);
     }
 
+    private static void addCustomizeBoardUseCase(AppFrame frame,
+                                                 JsonProfileDataAccessObject dataAccess) {
+        CustomizeBoardViewModel viewModel = new CustomizeBoardViewModel();
+        CustomizeBoardPresenter presenter = new CustomizeBoardPresenter(viewModel, SwingUtilities::invokeLater);
+        CustomizeBoardInteractor interactor = new CustomizeBoardInteractor(
+                dataAccess, new ArasaacDataAccessObject(), presenter);
+        CustomizeBoardController controller = new CustomizeBoardController(interactor);
+        frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel), ScreenNames.CUSTOMIZE);
+    }
+
     /**
-     * Sample data for development only. Replace once JSON storage is ready.
+     * Sample data for development when no saved profile exists.
      */
     private static ChildProfile createSampleProfile() {
         ChildProfile profile = new ChildProfile();
