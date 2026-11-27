@@ -2,30 +2,38 @@ package app;
 
 import data_access.ArasaacDataAccessObject;
 import data_access.JsonProfileDataAccessObject;
+import data_access.StarterThingsDataAccessObject;
 import entity.ChildProfile;
 import entity.CommunicationBoard;
 import entity.CommunicationDraft;
 import entity.CommunicationMessage;
 import entity.Pictogram;
 import entity.WordType;
+import entity.LinkedVocabulary;
 import interface_adapter.communicate_request.CommunicateRequestController;
 import interface_adapter.communicate_request.CommunicateRequestPresenter;
 import interface_adapter.communicate_request.CommunicateRequestViewModel;
 import interface_adapter.customize_board.CustomizeBoardController;
 import interface_adapter.customize_board.CustomizeBoardPresenter;
 import interface_adapter.customize_board.CustomizeBoardViewModel;
+import interface_adapter.suggest_things.SuggestThingsController;
+import interface_adapter.suggest_things.SuggestThingsPresenter;
+import interface_adapter.suggest_things.SuggestThingsViewModel;
 import interface_adapter.view_history.ViewHistoryController;
 import interface_adapter.view_history.ViewHistoryPresenter;
 import interface_adapter.view_history.ViewHistoryViewModel;
 import use_case.communicate_request.CommunicateRequestInteractor;
 import use_case.customize_board.CustomizeBoardInteractor;
+import use_case.suggest_things.SuggestThingsInteractor;
 import use_case.customize_board.PictogramSearchException;
 import use_case.view_history.ViewHistoryInteractor;
+import use_case.suggest_things.StarterThingsDataAccessInterface;
 import view.AppFrame;
 import view.CustomizeBoardPanel;
 import view.HistoryPanel;
 import view.MainBoardPanel;
 import view.ScreenNames;
+import view.SuggestionsStrip;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -41,6 +49,7 @@ import java.util.concurrent.Executors;
 
 /** Builds the application and connects dependencies. */
 public class Main {
+    private static final int DEFAULT_THINGS_PER_ACTION = 3;
 
     public static void main(String[] args) {
         Path path = Path.of("data", "profile.json");
@@ -104,9 +113,22 @@ public class Main {
         CustomizeBoardPresenter presenter = new CustomizeBoardPresenter(viewModel, SwingUtilities::invokeLater);
         CustomizeBoardInteractor interactor = new CustomizeBoardInteractor(dataAccess, arasaac, presenter);
         CustomizeBoardController controller = new CustomizeBoardController(interactor);
-        frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel), ScreenNames.CUSTOMIZE);
+        frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel,
+                createSuggestionsStrip(dataAccess, arasaac)), ScreenNames.CUSTOMIZE);
     }
 
+    /**
+     * UC6: suggested things for the selected action, shown inside the customize screen.
+     */
+    private static SuggestionsStrip createSuggestionsStrip(JsonProfileDataAccessObject dataAccess,
+                                                           ArasaacDataAccessObject arasaac) {
+        SuggestThingsViewModel viewModel = new SuggestThingsViewModel();
+        SuggestThingsInteractor interactor = new SuggestThingsInteractor(
+                dataAccess, new StarterThingsDataAccessObject(arasaac),
+                new SuggestThingsPresenter(viewModel));
+        return new SuggestionsStrip(new SuggestThingsController(interactor), viewModel);
+    }
+    
     /** Six starter tiles, with actual IDs and image URLs from ARASAAC. */
     private static ChildProfile createSampleProfile(ArasaacDataAccessObject arasaac) {
         String[] labels = {"water", "mom", "food", "play", "toilet", "sleep"};
@@ -150,7 +172,10 @@ public class Main {
             workers.shutdown();
         }
 
-        ChildProfile profile = new ChildProfile(board, new ArrayList<>());
+        // Linked vocabulary: give each default action a few starter things (play -> ball, toy, blocks).
+        // An action with no starter words, such as sleep, stays a plain action.
+        LinkedVocabulary links = createDefaultLinks(board, new StarterThingsDataAccessObject(arasaac));
+        ChildProfile profile = new ChildProfile(board, links, new ArrayList<>());
         LocalDateTime now = LocalDateTime.now();
         Pictogram water = board.getPictograms().get(0);
         Pictogram mom = board.getPictograms().get(1);
@@ -159,6 +184,26 @@ public class Main {
         profile.addMessage(new CommunicationMessage(List.of(water), "I want water.",
                 now.withHour(10).withMinute(0)));
         return profile;
+    }
+
+    /** Links up to three starter things to every action on the default board. */
+    private static LinkedVocabulary createDefaultLinks(CommunicationBoard board,
+                                                       StarterThingsDataAccessInterface starterThings) {
+        LinkedVocabulary links = new LinkedVocabulary();
+        for (Pictogram action : board.getPictograms()) {
+            if (!action.isAction()) {
+                continue;
+            }
+            for (Pictogram thing : starterThings.getStarterThings(action.getLabel())) {
+                if (links.getThings(action).size() >= DEFAULT_THINGS_PER_ACTION) {
+                    break;
+                }
+                if (!links.getThings(action).contains(thing)) {
+                    links.link(action, thing);
+                }
+            }
+        }
+        return links;
     }
 
     private static List<Pictogram> searchStarter(ArasaacDataAccessObject arasaac, String query) {

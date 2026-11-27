@@ -13,6 +13,7 @@ import entity.WordType;
 import use_case.communicate_request.CommunicateRequestDataAccessInterface;
 import use_case.core_message.CoreMessageDataAccessInterface;
 import use_case.customize_board.BoardCustomizationDataAccess;
+import use_case.suggest_things.SuggestThingsDataAccessInterface;
 import use_case.view_history.ViewHistoryDataAccessInterface;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ import java.util.List;
 /** Reads and saves the shared profile in the project's local JSON format. */
 public final class JsonProfileDataAccessObject implements BoardCustomizationDataAccess,
         CommunicateRequestDataAccessInterface, CoreMessageDataAccessInterface,
-        ViewHistoryDataAccessInterface {
+        ViewHistoryDataAccessInterface, SuggestThingsDataAccessInterface {
 
     private final Path file;
     private final ObjectMapper mapper = new ObjectMapper();

@@ -8,6 +8,7 @@ import use_case.communicate_request.CommunicateRequestDataAccessInterface;
 import use_case.core_message.CoreMessageDataAccessInterface;
 import use_case.customize_board.CustomizeBoardDataAccessInterface;
 import use_case.view_history.ViewHistoryDataAccessInterface;
+import use_case.suggest_things.SuggestThingsDataAccessInterface;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,6 +21,7 @@ public class InMemoryProfileDataAccessObject implements
         CommunicateRequestDataAccessInterface,
         CoreMessageDataAccessInterface,
         CustomizeBoardDataAccessInterface,
+        SuggestThingsDataAccessInterface,
         ViewHistoryDataAccessInterface {
 
     private ChildProfile profile;
@@ -41,6 +43,11 @@ public class InMemoryProfileDataAccessObject implements
         links.removeLinksNotOn(board);
         // Keep the links and history and replace the board, so a different board is really saved.
         profile = new ChildProfile(board, links, profile.getHistory());
+    }
+
+    @Override
+    public LinkedVocabulary getLinks() {
+        return profile.getLinks();
     }
 
     @Override
