@@ -117,6 +117,8 @@
 
 **Extensions:**
 - **3a.** Invalid PIN format: the system requests a valid four-digit PIN without saving the invalid value.
+- **3b.** If a PIN has already been set, the caregiver may reset it by entering the correct current PIN and a valid
+    new PIN. Invalid input leaves the saved PIN unchanged.
 
 **Access rule:** An incorrect PIN denies entry; the user can return to the child interface.
 
