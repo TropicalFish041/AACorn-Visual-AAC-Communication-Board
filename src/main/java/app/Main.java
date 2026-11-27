@@ -9,6 +9,7 @@ import entity.CommunicationDraft;
 import entity.CommunicationMessage;
 import entity.Pictogram;
 import entity.WordType;
+import entity.LinkedVocabulary;
 import interface_adapter.communicate_request.CommunicateRequestController;
 import interface_adapter.communicate_request.CommunicateRequestPresenter;
 import interface_adapter.communicate_request.CommunicateRequestViewModel;
@@ -26,6 +27,7 @@ import use_case.customize_board.CustomizeBoardInteractor;
 import use_case.suggest_things.SuggestThingsInteractor;
 import use_case.customize_board.PictogramSearchException;
 import use_case.view_history.ViewHistoryInteractor;
+import use_case.suggest_things.StarterThingsDataAccessInterface;
 import view.AppFrame;
 import view.CustomizeBoardPanel;
 import view.HistoryPanel;
@@ -47,6 +49,7 @@ import java.util.concurrent.Executors;
 
 /** Builds the application and connects dependencies. */
 public class Main {
+    private static final int DEFAULT_THINGS_PER_ACTION = 3;
 
     public static void main(String[] args) {
         Path path = Path.of("data", "profile.json");
@@ -169,7 +172,10 @@ public class Main {
             workers.shutdown();
         }
 
-        ChildProfile profile = new ChildProfile(board, new ArrayList<>());
+        // Linked vocabulary: give each default action a few starter things (play -> ball, toy, blocks).
+        // An action with no starter words, such as sleep, stays a plain action.
+        LinkedVocabulary links = createDefaultLinks(board, new StarterThingsDataAccessObject(arasaac));
+        ChildProfile profile = new ChildProfile(board, links, new ArrayList<>());
         LocalDateTime now = LocalDateTime.now();
         Pictogram water = board.getPictograms().get(0);
         Pictogram mom = board.getPictograms().get(1);
@@ -178,6 +184,26 @@ public class Main {
         profile.addMessage(new CommunicationMessage(List.of(water), "I want water.",
                 now.withHour(10).withMinute(0)));
         return profile;
+    }
+
+    /** Links up to three starter things to every action on the default board. */
+    private static LinkedVocabulary createDefaultLinks(CommunicationBoard board,
+                                                       StarterThingsDataAccessInterface starterThings) {
+        LinkedVocabulary links = new LinkedVocabulary();
+        for (Pictogram action : board.getPictograms()) {
+            if (!action.isAction()) {
+                continue;
+            }
+            for (Pictogram thing : starterThings.getStarterThings(action.getLabel())) {
+                if (links.getThings(action).size() >= DEFAULT_THINGS_PER_ACTION) {
+                    break;
+                }
+                if (!links.getThings(action).contains(thing)) {
+                    links.link(action, thing);
+                }
+            }
+        }
+        return links;
     }
 
     private static List<Pictogram> searchStarter(ArasaacDataAccessObject arasaac, String query) {
