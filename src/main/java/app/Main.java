@@ -17,6 +17,10 @@ import interface_adapter.customize_board.CustomizeBoardViewModel;
 import interface_adapter.view_history.ViewHistoryController;
 import interface_adapter.view_history.ViewHistoryPresenter;
 import interface_adapter.view_history.ViewHistoryViewModel;
+import interface_adapter.caregiver_pin.PinController;
+import interface_adapter.caregiver_pin.PinPresenter;
+import interface_adapter.caregiver_pin.PinViewModel;
+import use_case.caregiver_pin.PinInteractor;
 import use_case.communicate_request.CommunicateRequestInteractor;
 import use_case.customize_board.CustomizeBoardInteractor;
 import use_case.customize_board.PictogramSearchException;
@@ -26,6 +30,7 @@ import view.CustomizeBoardPanel;
 import view.HistoryPanel;
 import view.MainBoardPanel;
 import view.ScreenNames;
+import view.PinPanel;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -76,6 +81,7 @@ public class Main {
             addCommunicateRequestUseCase(frame, dataAccess, draft);
             addViewHistoryUseCase(frame, dataAccess);
             addCustomizeBoardUseCase(frame, dataAccess, arasaac);
+            addCaregiverPinUseCase(frame, dataAccess);
             frame.show(ScreenNames.MAIN);
             frame.setVisible(true);
         });
@@ -105,6 +111,25 @@ public class Main {
         CustomizeBoardInteractor interactor = new CustomizeBoardInteractor(dataAccess, arasaac, presenter);
         CustomizeBoardController controller = new CustomizeBoardController(interactor);
         frame.addScreen(new CustomizeBoardPanel(frame, controller, viewModel), ScreenNames.CUSTOMIZE);
+    }
+
+    private static void addCaregiverPinUseCase(
+            AppFrame frame,
+            JsonProfileDataAccessObject dataAccess) {
+
+        PinViewModel viewModel = new PinViewModel();
+
+        PinPresenter presenter = new PinPresenter(viewModel);
+
+        PinInteractor interactor =
+                new PinInteractor(dataAccess, presenter);
+
+        PinController controller =
+                new PinController(interactor);
+
+        frame.addScreen(
+                new PinPanel(frame, controller, viewModel),
+                ScreenNames.PIN);
     }
 
     /** Six starter tiles, with actual IDs and image URLs from ARASAAC. */

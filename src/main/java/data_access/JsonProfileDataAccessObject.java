@@ -14,6 +14,7 @@ import use_case.communicate_request.CommunicateRequestDataAccessInterface;
 import use_case.core_message.CoreMessageDataAccessInterface;
 import use_case.customize_board.BoardCustomizationDataAccess;
 import use_case.view_history.ViewHistoryDataAccessInterface;
+import use_case.caregiver_pin.PinDataAccessInterface;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -28,7 +29,7 @@ import java.util.List;
 /** Reads and saves the shared profile in the project's local JSON format. */
 public final class JsonProfileDataAccessObject implements BoardCustomizationDataAccess,
         CommunicateRequestDataAccessInterface, CoreMessageDataAccessInterface,
-        ViewHistoryDataAccessInterface {
+        ViewHistoryDataAccessInterface, PinDataAccessInterface {
 
     private final Path file;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -68,6 +69,24 @@ public final class JsonProfileDataAccessObject implements BoardCustomizationData
     }
 
     @Override
+    public synchronized String getPin() {
+        JsonNode pin = document.get("pin");
+
+        if (pin == null || pin.isNull()) {
+            return null;
+        }
+
+        return pin.isTextual() ? pin.asText() : "";
+    }
+
+    @Override
+    public synchronized void savePin(String pin) {
+        ObjectNode next = document.deepCopy();
+        next.put("pin", pin);
+        store(profile, next);
+    }
+
+    @Override
     public synchronized void saveBoard(CommunicationBoard board) {
         saveVocabulary(board, profile.getLinks());
     }
@@ -85,7 +104,10 @@ public final class JsonProfileDataAccessObject implements BoardCustomizationData
     }
 
     private void store(ChildProfile updated) {
-        ObjectNode next = document.deepCopy();
+        store(updated, document.deepCopy());
+    }
+
+    private void store(ChildProfile updated, ObjectNode next) {
         next.put("boardCapacity", updated.getBoard().getCapacity());
         writePictograms(next.putArray("board"), updated.getBoard().getPictograms());
         ArrayNode links = next.putArray("linkedVocabulary");

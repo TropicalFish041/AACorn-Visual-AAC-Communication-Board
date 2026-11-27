@@ -19,7 +19,6 @@ public class AppFrame extends JFrame implements Navigator {
         setSize(480, 720);
         setLocationRelativeTo(null);
 
-        root.add(new PinPanel(this), ScreenNames.PIN);
         root.add(new CaregiverMenuPanel(this), ScreenNames.CAREGIVER_MENU);
         root.add(new SearchPanel(this), ScreenNames.SEARCH);
 
